@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, render_template, redirect, request, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -6,7 +8,8 @@ from flask_bcrypt import Bcrypt
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///firstapp.db'
-app.config['SECRET_KEY'] = 'mysecretkey'
+# Secret key comes from the environment; a random one is generated if not set
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24).hex()
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
@@ -106,5 +109,10 @@ def update(id):
         return redirect('/')
     return render_template('update.html', person=person)
 
+# Create database tables on first run
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Debug mode only when FLASK_DEBUG=1 is set
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
